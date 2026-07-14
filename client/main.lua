@@ -1,4 +1,8 @@
+local QBCore = exports['qb-core']:GetCoreObject()
+
 local pedJobModel = 'a_m_m_fatlatin_01'
+local vehicleJobModel = 'pcj'
+local vehicleJob = nil
 
 local inService = false
 
@@ -88,10 +92,15 @@ CreateThread(function()
         )
 
         if dist < 5.0 then
-          DrawText3D(Config.Locations.VehicleMarker, "[~r~E~w~] Pegar Veiculo")
+          if vehicleJob ~= nil then
+            DrawText3D(Config.Locations.VehicleMarker, "[~r~E~w~] Guardar Veiculo")
+          else
+            DrawText3D(Config.Locations.VehicleMarker, "[~r~E~w~] Pegar Veiculo")
+          end
 
           if IsControlJustReleased(0, 38) then
             print('spawnando veiculo....')
+            SpawnVehicle()
           end
         end
       end
@@ -101,8 +110,36 @@ CreateThread(function()
 end)
 
 
+function SpawnVehicle()
+  if vehicleJob ~= nil then
+    if DoesEntityExist(vehicleJob) then
+      DeleteVehicle(vehicleJob)
+    end
+    vehicleJob = nil
+    print("Veiculo guardado!")
+    return
+  end
 
+  local model = GetHashKey(vehicleJobModel)
 
+  RequestModel(model)
+
+  while not HasModelLoaded(model) do
+    Wait(10)
+  end
+
+  vehicleJob = CreateVehicle(model, Config.Locations.Vehicle.x, Config.Locations.Vehicle.y, Config.Locations.Vehicle
+    .z, 90.0, true, false)
+
+  local plate = 'DELIVERY' .. math.random(100, 999)
+  SetVehicleNumberPlateText(vehicleJob, plate)
+
+  TriggerEvent("vehiclekeys:client:SetOwner", QBCore.Functions.GetPlate(vehicleJob))
+
+  TaskWarpPedIntoVehicle(PlayerPedId(), vehicleJob, -1)
+
+  SetModelAsNoLongerNeeded(model)
+end
 
 function DrawText3D(coord, text)
   SetTextScale(0.35, 0.35)
