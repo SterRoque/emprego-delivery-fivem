@@ -1,5 +1,7 @@
 local pedJobModel = 'a_m_m_fatlatin_01'
 
+local inService = false
+
 
 CreateThread(function()
   while true do
@@ -12,10 +14,20 @@ CreateThread(function()
 
     if dist < 5.0 then
       sleep = 5
-      DrawText3D(coordsJobStart, "[~g~E~w~] Iniciar Emprego")
+
+      if inService then
+        DrawText3D(coordsJobStart, "[~r~E~w~] Sair do Emprego")
+      else
+        DrawText3D(coordsJobStart, "[~r~E~w~] Iniciar Emprego")
+      end
 
       if IsControlJustReleased(0, 38) then
-        print("Emprego iniciado....")
+        inService = not inService
+        if inService then
+          print("Emprego iniciado....")
+        else
+          print("Saindo do Emprego...")
+        end
       end
     end
     Wait(sleep)
@@ -41,11 +53,51 @@ CreateThread(function()
     true
   )
 
+  SetEntityAsMissionEntity(pedJob, true, true)
   SetPedDefaultComponentVariation(pedJob)
 
   FreezeEntityPosition(pedJob, true)
   SetEntityInvincible(pedJob, true)
   SetBlockingOfNonTemporaryEvents(pedJob, true)
+end)
+
+
+CreateThread(function()
+  while true do
+    local sleep = 1000
+
+    if inService then
+      local playerPed = PlayerPedId()
+      local playerPedCoords = GetEntityCoords(playerPed)
+
+      local dist = #(playerPedCoords - Config.Locations.VehicleMarker)
+
+      if dist < 30.0 then
+        sleep = 5
+        DrawMarker(
+          36,
+          Config.Locations.VehicleMarker.x, Config.Locations.VehicleMarker.y, Config.Locations.VehicleMarker.z - 0.5,
+          0.0, 0.0, 0.0,
+          0.0, 0.0, 0.0,
+          1.0, 1.0, 1.0,
+          0, 0, 255, 150,
+          true,
+          false,
+          2,
+          false, nil, nil, false
+        )
+
+        if dist < 5.0 then
+          DrawText3D(Config.Locations.VehicleMarker, "[~r~E~w~] Pegar Veiculo")
+
+          if IsControlJustReleased(0, 38) then
+            print('spawnando veiculo....')
+          end
+        end
+      end
+    end
+    Wait(sleep)
+  end
 end)
 
 
